@@ -1,6 +1,7 @@
 import rcpy
 import rcpy.servo as servo
 import rcpy.clock as clock
+import time
 
 class ESCs:
     
@@ -37,7 +38,22 @@ class ESCs:
         for esc, clk in zip(self.escs, self.clks):
             esc.set(0.0)
             clk.stop()
-
+            
+    def spin_test(self, power=0.35):
+        print('starting spin test, power =', power)
+        time.sleep(1)
+        t = [0.0,0.0,0.0,0.0]
+        for n in range(4):
+            t[n] = power
+            print('throttle setting =', t)
+            set(t)
+            time.sleep(0.5)
+        for n in range(4):
+            t[n] = 0.0
+            print('throttle setting =', t)
+            set(t)
+            time.sleep(0.5)
+            
     # vector order is: FORE, STARBOARD, AFT, PORT
     def set(self, throttle_vector):
         if self.armed:

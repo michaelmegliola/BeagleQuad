@@ -38,6 +38,7 @@ class Quad:
             
 q = Quad()
 q.start()
-q.pid_test()
+#q.pid_test()
+q.escs.spin_test()
 q.stop()
             
