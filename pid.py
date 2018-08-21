@@ -56,7 +56,7 @@ class PidController:
         out += str(vals) + '\n'
         out += str(self.throttle_adj) + '\n'
         if (self.dt > 0):
-            out += 'count, time, Hz = ' + str(self.count) + ', ' + str(self.dt) + ', ' + str(self.count/self.dt)
+            out += 'count= ' + str(self.count) + ', time=' + str(self.dt) + ', Hz=' + str(self.count/self.dt)
         return out
 
 class BoundedPid(PidController):

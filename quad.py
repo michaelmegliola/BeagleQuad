@@ -26,13 +26,18 @@ class Quad:
         self.imu.start()
         self.escs.start()
         print('starting / rcpy final state =', Quad.RCPY_STATES[rcpy.get_state()])
+     
+    def stop(self):
+        rcpy.exit()
         
     def pid_test(self):
         for n in range(1000):
             self.pid.update()
+        print(self.imu)
         print(self.pid)
             
 q = Quad()
 q.start()
 q.pid_test()
+q.stop()
             

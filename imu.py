@@ -8,6 +8,7 @@ class IMU:
         self.t0 = None
         self.tb = None
         self.tb_dot = None
+        self.dt = 0.0
         
     def start(self):
         if rcpy.get_state() != rcpy.RUNNING:
@@ -31,14 +32,17 @@ class IMU:
         t1 = time.time()
         tb = data['tb']
         if self.t0 == None:
-            dt = 0.0
+            self.dt = 0.0
             self.tb = tb
             self.tb_dot = [0.0,0.0,0.0]
         else:
-            dt = t1 - self.t0
+            self.dt = t1 - self.t0
             self.tb_dot = np.subtract(tb, self.tb)
-            self.tb_dot = np.divide(tb, dt)
+            self.tb_dot = np.divide(self.tb_dot, self.dt)
         self.t0 = t1
         self.tb = tb
-        return self.tb, self.tb_dot, dt
+        return self.tb, self.tb_dot, self.dt
+        
+    def __str__(self):
+        return 'xyz=' + str(self.tb) + ', xyz_dot=' + str(self.tb_dot) + ', dt=' + str(self.dt)
         
