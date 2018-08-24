@@ -5,7 +5,7 @@ import rcpy.servo as servo
 import rcpy.clock as clock
 from pid import PidController
 from esc import ESCs
-from imu import IMU
+from ahrs import AHRS
 import numpy as np
 
 class Quad:
@@ -13,8 +13,8 @@ class Quad:
     PID_ANGULAR = [[0.10,0.0,0.05],[0,0,0],[0,0,0]]
     RCPY_STATES = ['IDLE','RUNNING','PAUSED','EXITING']
     def __init__(self):
-        self.imu = IMU()
-        self.pid = PidController(Quad.PID_ANGULAR, self.imu.get_angular_position, [0,0,0], PidController.t_angular)
+        self.ahrs = AHRS()
+        self.pid = PidController(Quad.PID_ANGULAR, self.ahrs.get_angular_position, [0,0,0], PidController.t_angular)
         self.escs = ESCs()
         self.mpu_time = None
         self.tb = None
@@ -23,7 +23,7 @@ class Quad:
     def start(self):
         print('starting / rcpy initial state =', Quad.RCPY_STATES[rcpy.get_state()])
         rcpy.set_state(rcpy.RUNNING)
-        self.imu.start()
+        self.ahrs.start()
         self.escs.start()
         print('starting / rcpy final state =', Quad.RCPY_STATES[rcpy.get_state()])
      
@@ -33,7 +33,7 @@ class Quad:
     def pid_test(self):
         for n in range(1000):
             self.pid.update()
-        print(self.imu)
+        print(self.ahrs)
         print(self.pid)
             
 q = Quad()

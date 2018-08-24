@@ -3,7 +3,7 @@ import rcpy
 import rcpy.mpu9250 as mpu9250
 import numpy as np
 
-class IMU:
+class AHRS:
     def __init__(self):
         self.t0 = None
         self.tb = None
