@@ -39,7 +39,7 @@ class ESCs:
             esc.set(0.0)
             clk.stop()
             
-    def spin_test(self, power=0.35):
+    def spin_test(self, power=0.25):
         print('starting spin test, power =', power)
         time.sleep(1)
         t = [0.0,0.0,0.0,0.0]

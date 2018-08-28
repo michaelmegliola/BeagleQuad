@@ -6,13 +6,16 @@ import rcpy.clock as clock
 from pid import PidController
 from esc import ESCs
 from ahrs import AHRS
+from altimeter import Altimeter
 import numpy as np
+
 
 class Quad:
     
     PID_ANGULAR = [[0.10,0.0,0.05],[0,0,0],[0,0,0]]
     RCPY_STATES = ['IDLE','RUNNING','PAUSED','EXITING']
     def __init__(self):
+        self.altimeter = Altimeter()
         self.ahrs = AHRS()
         self.pid = PidController(Quad.PID_ANGULAR, self.ahrs.get_angular_position, [0,0,0], PidController.t_angular)
         self.escs = ESCs()
@@ -25,9 +28,11 @@ class Quad:
         rcpy.set_state(rcpy.RUNNING)
         self.ahrs.start()
         self.escs.start()
+        self.altimeter.start()
         print('starting / rcpy final state =', Quad.RCPY_STATES[rcpy.get_state()])
      
     def stop(self):
+        self.altimeter.stop()
         rcpy.exit()
         
     def pid_test(self):
@@ -35,10 +40,12 @@ class Quad:
             self.pid.update()
         print(self.ahrs)
         print(self.pid)
+
+
             
 q = Quad()
 q.start()
-#q.pid_test()
+q.pid_test()
 q.escs.spin_test()
 q.stop()
             
