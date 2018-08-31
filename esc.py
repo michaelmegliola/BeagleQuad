@@ -9,7 +9,7 @@ ESC_STARBOARD = 1
 ESC_AFT = 2
 ESC_PORT = 3
 
-MAX_THROTTLE = 0.2   # bench test @ 20% max throttle
+MAX_THROTTLE = 1.0   # bench test @ 20% max throttle
 MIN_THROTTLE = 0.0
 
 PULSE_FREQUENCY_SECS = 0.02
@@ -18,6 +18,8 @@ class ESCs:
     def __init__(self):
         servo.disable()  # turn off 6v servo power rail
         self.throttle = [None,None,None,None]
+        self.throttle_max = [0.0,0.0,0.0,0.0]
+        self.throttle_min = [999.9,999.9,999.9,999.9]
         self.escs = [servo.ESC(ESC_FORE+1), servo.ESC(ESC_STARBOARD+1), servo.ESC(ESC_AFT+1), servo.ESC(ESC_PORT+1)]
         self.clks = [clock.Clock(esc, PULSE_FREQUENCY_SECS) for esc in self.escs]
         self.armed = False
@@ -55,8 +57,13 @@ class ESCs:
         self.throttle = t
         self.throttle = np.minimum(self.throttle, MAX_THROTTLE)
         self.throttle = np.maximum(self.throttle, MIN_THROTTLE)
+        self.throttle_max = np.maximum(self.throttle, self.throttle_max)
+        self.throttle_min = np.minimum(self.throttle, self.throttle_min)
         for setting, esc in zip(self.throttle, self.escs):
             esc.set(setting)
             
     def __str__(self):
-        return str(self.throttle)
+        out = str(self.throttle)
+        out += ' max: ' + str(self.throttle_max)
+        out += ' min: ' + str(self.throttle_min)
+        return out
