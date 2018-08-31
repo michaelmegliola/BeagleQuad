@@ -12,14 +12,14 @@ import numpy as np
 
 class Quad:
     
-    PID_ANGULAR =  [[0.10,0.0,0.05],[0,0,0],[0,0,0]]
-    PID_ALTITUDE = [[0.0,0.0,0.0],[0.0,0.0,0.0],[0.10,0.0,0.05]]
+    PID_ANGULAR =  [[0.20,0.0,0.20],[0.20,0,0.20],[0,0,0]]
+    PID_ALTITUDE = [[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0]]
     RCPY_STATES = ['IDLE','RUNNING','PAUSED','EXITING']
     def __init__(self):
         self.altimeter = Altimeter()
         self.ahrs = AHRS()
         self.pid_angular = PidController(Quad.PID_ANGULAR, self.ahrs.get_angular_position, [0,0,0], PidController.t_angular)
-        self.pid_altitude = PidController(Quad.PID_ALTITUDE, self.altimeter.get_altitude, [0,0,2], PidController.t_linear, lower=[.25,.25,.25,.25], upper=[.4,.4,.4,.4])
+        self.pid_altitude = PidController(Quad.PID_ALTITUDE, self.altimeter.get_altitude, [0,0,0], PidController.t_linear, lower=[.2,.2,.2,.2], upper=[.4,.4,.4,.4])
         self.escs = ESCs()
         self.escs.arm()
         self.mpu_time = None
@@ -56,17 +56,18 @@ class Quad:
         time.sleep(2)
         print("running...")
         t0 = time.time()
-        t_stop = t0 + 1.5  # duration of flight
+        t_stop = t0 + 4.0 # duration of flight
         
         while time.time() < t_stop:
             throttle = [0.0,0.0,0.0,0.0]
             throttle = np.add(throttle, self.pid_angular.update())
             throttle = np.add(throttle, self.pid_altitude.update())
             self.escs.set_throttle(throttle)
-            print(self.pid_altitude)
             
+        print(self.pid_altitude)
         print(self.pid_angular)
-        
+        print('============THROTTLE=========================================')
+        print(self.escs)
             
 q = Quad()
 q.start()
