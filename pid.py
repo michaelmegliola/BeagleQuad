@@ -33,6 +33,9 @@ class PidController:
         self.i_limit = i            # limit for i term
         self.count = 0
         self.dt = 0.0
+        self.throttle_adj = [0.0,0.0,0.0,0.0]
+        self.t_a_max = [0.0,0.0,0.0,0.0]
+        self.t_a_min = [999.9,999.9,999.9,999.9]
     
     def update(self):
         self.count += 1
@@ -52,6 +55,8 @@ class PidController:
             self.throttle_adj = np.add(self.throttle_adj, np.multiply(self.pid[n], self.t[n]))
             self.throttle_adj = np.maximum(self.throttle_adj, self.lower)
             self.throttle_adj = np.minimum(self.throttle_adj, self.upper)
+        self.t_a_max = np.maximum(self.t_a_max, self.throttle_adj)
+        self.t_a_min = np.minimum(self.t_a_min, self.throttle_adj)
         return self.throttle_adj
     
     def set_target(self, k_3):
@@ -62,6 +67,8 @@ class PidController:
         out =  '---' + str(self.count) + '-----------------------------------\n'
         out += str(vals) + '\n'
         out += str(self.throttle_adj) + '\n'
+        out += 'max: ' + str(self.t_a_max) + '\n'
+        out += 'min: ' + str(self.t_a_min) + '\n'
         if (self.dt > 0):
             out += 'count= ' + str(self.count) + ', time=' + str(self.dt) + ', Hz=' + str(self.count/self.dt)
         return out
