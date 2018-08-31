@@ -19,7 +19,7 @@ class Quad:
         self.altimeter = Altimeter()
         self.ahrs = AHRS()
         self.pid_angular = PidController(Quad.PID_ANGULAR, self.ahrs.get_angular_position, [0,0,0], PidController.t_angular)
-        self.pid_altitude = PidController(Quad.PID_ALTITUDE, self.altimeter.get_altitude, [0,0,1], PidController.t_linear)
+        self.pid_altitude = PidController(Quad.PID_ALTITUDE, self.altimeter.get_altitude, [0,0,2], PidController.t_linear, lower=[.25,.25,.25,.25], upper=[.4,.4,.4,.4])
         self.escs = ESCs()
         self.escs.arm()
         self.mpu_time = None
@@ -39,32 +39,38 @@ class Quad:
         self.altimeter.stop()
         rcpy.exit()
         
-    def run(self):
-        print("running...")
-        ts = np.zeros((10,4))
-        t0 = time.time()
-        t_alt = 0
-        throttle = [0.0,0.0,0.0,0.0]
+    def spin_test(self):
+        print('apply power')
+        self.escs.set_throttle([0.0,0.0,0.0,0.0])
         for n in range(10):
-            t1 = time.time()
+            print(n)
+            time.sleep(1)
+        print('spin test')
+        self.escs.set_throttle([0.25,0.25,0.25,0.25])
+        time.sleep(2)
+        self.escs.set_throttle([0.0,0.0,0.0,0.0])
+        
+    def run(self):
+        print('getting ready...')
+        throttle = [0.0,0.0,0.0,0.0]
+        time.sleep(2)
+        print("running...")
+        t0 = time.time()
+        t_stop = t0 + 1.5  # duration of flight
+        
+        while time.time() < t_stop:
+            throttle = [0.0,0.0,0.0,0.0]
             throttle = np.add(throttle, self.pid_angular.update())
-            if t1 > t_alt:
-                throttle = np.add(throttle, self.pid_altitude.update())
-                t_alt = t1 + 0.5
-            throttle = np.minimum(throttle, 0.40)
-            throttle = np.maximum(throttle, 0.00)
-            t0=t1
-            ts[n,0] = throttle[0]
-            ts[n,1] = throttle[1]
-            ts[n,2] = throttle[2]
-            ts[n,3] = throttle[3]
+            throttle = np.add(throttle, self.pid_altitude.update())
+            self.escs.set_throttle(throttle)
+            print(self.pid_altitude)
             
-        print(ts)
-        #print(self.pid_angular)
-        #print(self.pid_altitude)
+        print(self.pid_angular)
+        
             
 q = Quad()
 q.start()
+#q.spin_test()
 q.run()
 q.stop()
             

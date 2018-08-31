@@ -19,7 +19,7 @@ class PidController:
     I = 1
     D = 2
     
-    def __init__(self, k_3_3, f_state, target, t):
+    def __init__(self, k_3_3, f_state, target, t, lower=[0,0,0,0], upper=[1,1,1,1], i=0.1):
         self.k = k_3_3              # [kp,ki,kd] for each of 3 axes (x,y,z)
         self.f_state = f_state      # function that returns current state (x,y,z)
         self.target = target        # target setpoints for 3 axes (x,y,z)
@@ -28,6 +28,9 @@ class PidController:
         self.d = [0.0,0.0,0.0]      # d for 3 axes (x,y,z)
         self.pid = [0.0,0.0,0.0]    # resulting pid values for 3 axes (x,y,z)
         self.t = t                  # translation matrix to apply pid to motor speeds
+        self.lower = lower          # lower limit for throttle adjustment
+        self.upper = upper          # upper limit for throttle adjustment
+        self.i_limit = i            # limit for i term
         self.count = 0
         self.dt = 0.0
     
@@ -40,11 +43,15 @@ class PidController:
             error = xyz[n] - self.target[n]
             self.p[n] = error
             self.i[n] += error * dt
+            self.i[n] = min(self.i[n], self.i_limit)
+            self.i[n] = max(self.i[n], -self.i_limit)
             self.d[n] = -xyz_dot[n]
             self.pid[n] =  self.k[n][PidController.P] * self.p[n]
             self.pid[n] += self.k[n][PidController.I] * self.i[n] 
             self.pid[n] += self.k[n][PidController.D] * self.d[n]
             self.throttle_adj = np.add(self.throttle_adj, np.multiply(self.pid[n], self.t[n]))
+            self.throttle_adj = np.maximum(self.throttle_adj, self.lower)
+            self.throttle_adj = np.minimum(self.throttle_adj, self.upper)
         return self.throttle_adj
     
     def set_target(self, k_3):
@@ -58,20 +65,5 @@ class PidController:
         if (self.dt > 0):
             out += 'count= ' + str(self.count) + ', time=' + str(self.dt) + ', Hz=' + str(self.count/self.dt)
         return out
-
-class BoundedPid(PidController):
-    def __init__(self, k_3_3, f_state, target, t, b_state, b_3):
-        super().__init__(k_3_3, f_state, target, t)
-        self.b_state = b_state
-        self.b_3 = b_3
-        
-    def update(self, dt):
-        self.throttle_adj = super().update(dt)
-        vals = self.b_state()
-        for n in range(3):
-            cap = 1.0 - ((vals[n] - self.b_3[n]) / self.b_3[n])
-            self.throttle_adj = np.minimum(self.throttle_adj, cap)
-           
-        return self.throttle_adj
         
         
