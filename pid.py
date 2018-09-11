@@ -12,7 +12,7 @@ import sys
 
 class PidController:
     
-    t_angular = [[-1,0,1,0],[0,-1,0,1],[-1,1,-1,1]]    # translation matrix to apply angular values to motors
+    t_angular = [[1,0,-1,0],[0,-1,0,1],[-1,1,-1,1]]    # translation matrix to apply angular values to motors
     t_linear =  [[1,0,-1,0],[0,1,0,-1],[-1,-1,-1,-1]]  # translation matrix to apply linear values to motors
     
     P = 0
@@ -21,7 +21,7 @@ class PidController:
     
     def __init__(self, k_3_3, f_state, target, t, lower=[0,0,0,0], upper=[1,1,1,1], i=0.1):
         self.k = k_3_3              # [kp,ki,kd] for each of 3 axes (x,y,z)
-        self.f_state = f_state      # function that returns current state (x,y,z)
+        self.f_state = f_state      # function that returns current state (x,y,z), (x_dot, y_dot, z_dot), dt
         self.target = target        # target setpoints for 3 axes (x,y,z)
         self.p = [None,None,None]   # p for 3 axes (x,y,z)
         self.i = [0.0,0.0,0.0]      # i for 3 axes (x,y,z)
