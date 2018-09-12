@@ -72,9 +72,8 @@ class MPU_9250:
         
     def get(self):
         self.i += 1
-        xyz = mpu9250.read()['tb']
-        return [xyz[1], xyz[0], xyz[2]], time.time()
-        #return mpu9250.read()['tb'], time.time()
+        xyz = np.multiply(mpu9250.read()['tb'], 57.29578) # radians to degrees
+        return xyz, time.time()
         
     def start(self):
         print('warming up MPU...')
@@ -84,7 +83,7 @@ class MPU_9250:
             time.sleep(0.10)
             
         for n in range(3):
-            print('sample reading from MPU_9250', mpu9250.read())
+            print('sample reading from MPU_9250', mpu9250.read()['tb'])
         
     def __str__(self):
         return 'MPU_9250 i=' + str(self.i)
@@ -94,21 +93,22 @@ class AHRS():
     Platform = 'BeagleBoneBlue'
     
     def __init__(self):
-        self.gyro = GYRO_FXAS21002()
+        self.gyro_sensor = GYRO_FXAS21002()
         if AHRS.Platform == 'BeagleBoneBlue':
-            self.ahrs = MPU_9250()
+            self.ahrs_sensor = MPU_9250()
         else:
-            self.ahrs = AHRS_BNO055()
+            self.ahrs_sensor = AHRS_BNO055()
         self.i = 0
         self.xyz = [0.0,0.0,0.0]
         self.xyz_dot = [0.0,0.0,0.0]
+        self.xyz_clipped = [0.0,0.0,0.0]
         self.t0 = None
         self.t_ahrs = None
         self.dt = None
         
     def start(self):
-        self.gyro.start()
-        self.ahrs.start()
+        self.gyro_sensor.start()
+        self.ahrs_sensor.start()
         
     def Hz(x):
         if x == None or x == 0:
@@ -119,32 +119,40 @@ class AHRS():
     def get_angular_position(self):
 
         if self.t0 == None:
-            self.xyz, t1 = self.ahrs.get()
+            self.xyz, t1 = self.ahrs_sensor.get()
             self.t_ahrs = t1
             self.dt = 0.0
             self.xyz_dot[0] = 0.0
             self.xyz_dot[1] = 0.0
             self.xyz_dot[2] = 0.0   
-        elif time.time() > self.t_ahrs + 0.10: # reset to absolute readings @ 10Hz
+        elif time.time() > self.t_ahrs + 1.00: # reset to absolute readings @ 1Hz
             xyz = self.xyz
-            self.xyz, t1 = self.ahrs.get()
+            self.xyz, t1 = self.ahrs_sensor.get()
             self.t_ahrs = t1
             self.dt = t1 - self.t0
             self.xyz_dot[0] = (self.xyz[0] - xyz[0]) / self.dt
             self.xyz_dot[1] = (self.xyz[1] - xyz[1]) / self.dt
             self.xyz_dot[2] = (self.xyz[2] - xyz[2]) / self.dt
         else:
-            self.xyz_dot, t1 = self.gyro.get()
+            self.xyz_dot, t1 = self.gyro_sensor.get()
             self.dt = t1 - self.t0
-            self.xyz[0] += self.xyz_dot[0] * self.dt  # between absolute readings, integrate
-            self.xyz[1] += self.xyz_dot[1] * self.dt  # gyro reading over time to advance
+            ##############################################
+            #                                            #
+            # DANGER DANGER. Sensors are not aligned     #
+            #                                            #
+            ##############################################
+            self.xyz[0] += self.xyz_dot[1] * self.dt  # between absolute readings, integrate
+            self.xyz[1] -= self.xyz_dot[0] * self.dt  # gyro reading over time to advance
             self.xyz[2] += self.xyz_dot[2] * self.dt  # estimate of absolute euler angles.
             
         self.t0 = t1
         self.i += 1
         self.stop_time = time.time()
 
-        return self.xyz, self.xyz_dot, self.dt
+        self.xyz_clipped = np.minimum(self.xyz,[ 30.0, 30.0, 360.0])
+        self.xyz_clipped = np.maximum(self.xyz_clipped,[-30.0,-30.0,-360.0])
+
+        return self.xyz_clipped, self.xyz_dot, self.dt
     
     def __str__(self):   
         return 'AHRS i=' + str(self.i) + ',' + str(self.ahrs.i) + ',' + str(self.gyro.i) + ' ' + str(self.xyz) + str(self.xyz_dot) + ' Hz=' + str(AHRS.Hz(self.dt))

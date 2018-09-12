@@ -11,14 +11,13 @@ class Quad:
     
     Platform = 'BeagleBoneBlue'
     
-    PID_ANGULAR =  [[0.5,0.0,0.20],[0.5,0,0.20],[0,0,0]]
+    PID_ANGULAR =  [[0.0090,0.0,0.0035],[0.0090,0,0.0035],[0,0,0]]
     PID_ALTITUDE = [[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0]]
     RCPY_STATES = ['IDLE','RUNNING','PAUSED','EXITING']
     def __init__(self):
         #self.altimeter = Altimeter()
         self.ahrs = AHRS()
-        #self.pid_angular = PidController(Quad.PID_ANGULAR, self.ahrs.get_angular_position, [0,0,0], PidController.t_angular)
-        self.pid_angular = PidController(Quad.PID_ANGULAR, self.f, [0,0,0], PidController.t_angular)
+        self.pid_angular = PidController(Quad.PID_ANGULAR, self.ahrs.get_angular_position, [0,0,0], PidController.t_angular)
         #self.pid_altitude = PidController(Quad.PID_ALTITUDE, self.altimeter.get_altitude, [0,0,0], PidController.t_linear, lower=[0.0,0.0,0.0,0.0], upper=[.4,.4,.4,.4])
         self.escs = ESCs()
         self.escs.arm()
@@ -52,10 +51,9 @@ class Quad:
         
     def ahrs_test(self):
         print('AHRS test')
-        for n in range(100):
-            self.ahrs.get_angular_position()
-            print(self.ahrs)
-            time.sleep(0.2)
+        for n in range(1000):
+            print(self.ahrs.get_angular_position())
+
     
     def f(self):
         return [1,0,0],[0.0,0,0],0.01
@@ -71,12 +69,8 @@ class Quad:
         while time.time() < t_stop:
             throttle = [0.0,0.0,0.0,0.0]
             throttle = np.add(throttle, self.pid_angular.update())
-            #throttle = np.add(throttle, self.pid_altitude.update())
             self.escs.set_throttle(throttle)
-            #print(self.escs)
         
-        
-        #print(self.pid_altitude)
         print(self.pid_angular)
         print('============THROTTLE=========================================')
         print(self.escs)
