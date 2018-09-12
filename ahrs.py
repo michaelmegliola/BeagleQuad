@@ -4,8 +4,6 @@ import rcpy
 import rcpy.mpu9250 as mpu9250
 import rcpy.servo as servo
 import rcpy.clock as clock
-
-# from Adafruit_BNO055 import BNO055
 from nxp_imu import IMU
 
 class AHRS_BNO055:

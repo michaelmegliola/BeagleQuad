@@ -43,4 +43,4 @@ class Altimeter():
         self.tof.stop_ranging() # Stop ranging
         
     def __str__(self):
-        return str(self.xyz_dot) + str(self.xyz_dot) + str(self.dt)
+        return str(self.xyz) + str(self.xyz_dot) + str(self.dt)
